@@ -8,3 +8,5 @@
 ### STAGE 5: Adding the use of REDIS everywhere, to improve the system performance.
 
 Other changes if time permits: Scalibility, dockerise it, connect it to my already existing micro frontend, create a load balancer, create an activtity feed service - we already have this code mainly filtering from the other mock strava project..
+
+![Check Design.jpg](./Design.jpg)
