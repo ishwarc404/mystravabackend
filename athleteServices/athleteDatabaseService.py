@@ -6,6 +6,11 @@ from peewee import *
 import random
 #database name is: mystravabackend
 import athleteObject
+from kafka import KafkaProducer, KafkaConsumer
+
+# create a Kafka consumer
+consumer = KafkaConsumer('create-athlete', bootstrap_servers=['localhost:9092'])
+
 
 db = MySQLDatabase('mystravabackend', host='localhost', port=3306, user='root', password='password')
 
@@ -32,8 +37,9 @@ def tearDownAthletePrimaryTable():
 
 
 def writeToAthletePrimary(athletePrimaryObject):
-    print(athletePrimaryObject.get())
-    q = athletePrimary.insert(athleteID=athletePrimaryObject.athleteID, athleteFirstName=athletePrimaryObject.athleteFirstName, athleteLastName=athletePrimaryObject.athleteLastName, athleteImage=athletePrimaryObject.athleteImage, athleteCity=athletePrimaryObject.athleteCity, athleteState=athletePrimaryObject.athleteState)
+    # read messages from the 'my-topic' topic
+    print(athletePrimaryObject['athleteID'])
+    q = athletePrimary.insert(athleteID=athletePrimaryObject['athleteID'], athleteFirstName=athletePrimaryObject['athleteFirstName'], athleteLastName=athletePrimaryObject['athleteLastName'], athleteImage=athletePrimaryObject['athleteImage'], athleteCity=athletePrimaryObject['athleteCity'], athleteState=athletePrimaryObject['athleteState'])
     q.execute()
 
 
@@ -45,5 +51,9 @@ def readFromAthletePrimary(athleteID):
 
 #run only once while set-up
 if(__name__ == "__main__"):
-    # setUpAthletePrimaryTable()
-    pass
+    while(True):
+        # read messages from the 'create-athlete' topic
+        for message in consumer:
+            athletePrimaryObject = json.loads(message.value)
+            writeToAthletePrimary(athletePrimaryObject)
+

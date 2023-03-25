@@ -7,6 +7,11 @@ import uuid
 from athleteObject import athletePrimary
 import athleteDatabaseService
 
+from kafka import KafkaProducer, KafkaConsumer
+
+# create a Kafka producer
+producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
+
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -26,7 +31,11 @@ def createAthlete():
     athletePrimaryObject = athletePrimary(athleteID, athleteFirstName, athleteLastName, athleteImage, athleteCity, athleteState)
     
     #writing to database
-    athleteDatabaseService.writeToAthletePrimary(athletePrimaryObject)
+    # send a message to the 'my-topic' topic
+    producer.send('create-athlete', json.dumps(athletePrimaryObject.get()).encode('utf-8'))
+    producer.flush()
+
+    # athleteDatabaseService.writeToAthletePrimary(athletePrimaryObject)
 
     return athletePrimaryObject.get()
 
