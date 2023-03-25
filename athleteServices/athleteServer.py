@@ -15,22 +15,33 @@ def generateAthleteID():
     return str(id.int)[0:6]
 
 @app.route('/createAthlete', methods=['POST'])
-def upload_file():
+def createAthlete():
     athleteID = generateAthleteID()
+    #in the future we can add a check to see if the above athleteID already exists in the database or not
     athleteFirstName = request.args.get('athleteFirstName')
     athleteLastName = request.args.get('athleteLastName')
     athleteImage = request.args.get('athleteImage')
     athleteCity = request.args.get('athleteCity')
     athleteState = request.args.get('athleteState')
-    athleteSubscription = request.args.get('athleteSubscription')
     athletePrimaryObject = athletePrimary(athleteID, athleteFirstName, athleteLastName, athleteImage, athleteCity, athleteState)
     
     #writing to database
-    athleteDatabaseService.writeToAthletePrimary(athletePrimaryObject.get())
+    athleteDatabaseService.writeToAthletePrimary(athletePrimaryObject)
+
+    return athletePrimaryObject.get()
+
+
+@app.route('/retrieveAthlete', methods=['GET'])
+def retrieveAthlete():
+    athleteID = request.args.get('athleteID')
+    
+    #reading from database
+    retrievedAthleteData = athleteDatabaseService.readFromAthletePrimary(athleteID)
+    return json.dumps(retrievedAthleteData)
 
 
 if(__name__ == "__main__"):
-    # app.run(debug=True, port=5005)
+    app.run(debug=True, port=5005)
     # print(generateAthleteID())
     pass
 
