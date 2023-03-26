@@ -11,12 +11,12 @@ class activityPrimary:
 
     def get(self):
         return {
-        'athleteID' : 'athleteID',
-        'activtiyID' : 'activtiyID',
-        'activityName' : 'activityName',
-        'activityType' : 'activityType',
-        'activityDistance' : 'activityDistance',
-        'activityElevationGain' : 'activityElevationGain',
-        'activityElapsedTime' : 'activityElapsedTime',
-        'activityPolyline' : 'activityPolyline',
+        'athleteID' : self.athleteID,
+        'activtiyID' : self.activtiyID,
+        'activityName' : self.activityName,
+        'activityType' : self.activityType,
+        'activityDistance' : self.activityDistance,
+        'activityElevationGain' : self.activityElevationGain,
+        'activityElapsedTime' : self.activityElapsedTime,
+        'activityPolyline' : self.activityPolyline,
         }

@@ -34,9 +34,10 @@ create_consumer_athleteID = KafkaConsumer('create-activity-via-gpx-athleteID', b
 create_consumer = KafkaConsumer('create-activity-via-gpx', bootstrap_servers=['localhost:9092'])
 
 
-def createActivityViaGPX(athleteID, activityID, uploadedFile):
-    results = gpxParserService.gpxparser.parsefile(uploadedFile)
+def createActivityViaGPX(athleteID, activityID):
+    results = gpxparser.parsefile(activityID)
     activityObjectObj = activityPrimary(athleteID, activityID, results[0], 'Run', results[1], results[2], results[3], results[4]).get()
+    print(activityObjectObj)
     #need to write this to the database now
     for key in activityObjectObj.keys():
         q = Activity.insert(athleteID=athleteID,activityID=activityID, activityFieldName=key, activityFieldValue=activityObjectObj[key])
@@ -58,12 +59,13 @@ if __name__ == '__main__':
             activityID = json.loads(message.value)['activityID']
             print("Received 1:")
             print(athleteID, activityID)
+            break
 
-        for message in create_consumer:
-            uploadedFile = message.value
-            print("Received 2:")
-            print(uploadedFile)
+        # for message in create_consumer_athleteID:
+        #     uploadedFile = message.value
+        #     print("Received 2:")
+        #     break
 
 
-        if(athleteID and uploadedFile):
-            createActivityViaGPX(athleteID, activityID, uploadedFile)
+        if(athleteID):
+            createActivityViaGPX(athleteID, activityID)

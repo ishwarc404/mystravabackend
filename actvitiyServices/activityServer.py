@@ -33,17 +33,16 @@ def upload_file():
 
     uploadedFile.save('./uploadedFiles/' + activityID)
 
-    #sending it to ADS
+    # #sending it to ADS
     producer.send('create-activity-via-gpx-athleteID', json.dumps(
         {
             'athleteID':athleteID,
             'activityID':activityID
         }
     ).encode('utf-8'))
-    producer.flush()
-    with open('./uploadedFiles/' + activityID, 'rb') as file:
-        file_data = file.read()
-    producer.send('create-activity-via-gpx', value = file_data)
+    # with open('./uploadedFiles/' + activityID, 'rb') as file:
+    #     file_data = file.read()
+    # producer.send('create-activity-via-gpx-athleteID', file_data)
     producer.flush()
 
     return activityID
