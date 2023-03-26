@@ -34,7 +34,7 @@ def tearDownActivityTable():
 
 # create a Kafka consumer
 create_consumer_athleteID = KafkaConsumer('create-activity-via-gpx-athleteID', bootstrap_servers=['localhost:9092'])
-create_consumer = KafkaConsumer('create-activity-via-gpx', bootstrap_servers=['localhost:9092'])
+# create_consumer = KafkaConsumer('create-activity-via-gpx', bootstrap_servers=['localhost:9092'])
 
 
 def createActivityViaGPX(athleteID, activityID):
@@ -56,10 +56,9 @@ def createActivityViaGPX(athleteID, activityID):
     }
     #writing to database - sending it to the athlete-service via kafka
     producer.send('athlete-service', json.dumps(dataObject).encode('utf-8'))
-    producer.flush()
-
     #now we need to call club service
-
+    producer.send('club-service', json.dumps(dataObject).encode('utf-8'))
+    producer.flush()
 
 
 
