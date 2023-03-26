@@ -9,6 +9,8 @@ import athleteDatabaseService
 
 from kafka import KafkaProducer, KafkaConsumer
 
+#need to use gunicorn for non-blocking flask
+
 # create a Kafka producer
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
 
@@ -31,19 +33,16 @@ def createAthlete():
     athletePrimaryObject = athletePrimary(athleteID, athleteFirstName, athleteLastName, athleteImage, athleteCity, athleteState)
     
     #writing to database
-    # send a message to the 'my-topic' topic
     producer.send('create-athlete', json.dumps(athletePrimaryObject.get()).encode('utf-8'))
     producer.flush()
 
-    # athleteDatabaseService.writeToAthletePrimary(athletePrimaryObject)
-
-    return athletePrimaryObject.get()
+    return athleteID
 
 
 @app.route('/retrieveAthlete', methods=['GET'])
 def retrieveAthlete():
+    #this will be blocking, because not using kafka but ok for now
     athleteID = request.args.get('athleteID')
-    
     #reading from database
     retrievedAthleteData = athleteDatabaseService.readFromAthletePrimary(athleteID)
     return json.dumps(retrievedAthleteData)
