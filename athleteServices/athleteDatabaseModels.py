@@ -22,9 +22,9 @@ class athleteSecondary(Model):
     athleteClubs = TextField()
     athleteFollowers = TextField()
     athleteFollowing = TextField()
-    athleteNetDistance = TextField()
-    athleteNetTime = TextField()
-    athleteNetElevation = TextField()
+    athleteNetDistance = FloatField()
+    athleteNetTime = FloatField()
+    athleteNetElevation = FloatField()
     
     class Meta:
         database=db

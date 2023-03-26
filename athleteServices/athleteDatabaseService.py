@@ -60,9 +60,9 @@ def updateAthleteSecondaryActivityStat(stats):
     #we are not doing weekly, just overall since beginning of time
     
     q = athleteDatabaseModels.athleteSecondary.update({
-        athleteDatabaseModels.athleteSecondary.athleteNetDistance : int(athleteDatabaseModels.athleteSecondary.athleteNetDistance) + stats['activityDistance'],
-        athleteDatabaseModels.athleteSecondary.athleteNetTime : stats['activityTime'],
-        athleteDatabaseModels.athleteSecondary.athleteNetElevation : int(athleteDatabaseModels.athleteSecondary.athleteNetElevation) + stats['activityElevation'],
+        athleteDatabaseModels.athleteSecondary.athleteNetDistance : athleteDatabaseModels.athleteSecondary.athleteNetDistance + stats['activityDistance'],
+        athleteDatabaseModels.athleteSecondary.athleteNetTime : athleteDatabaseModels.athleteSecondary.athleteNetTime + stats['activityTime'],
+        athleteDatabaseModels.athleteSecondary.athleteNetElevation : athleteDatabaseModels.athleteSecondary.athleteNetElevation + stats['activityElevation'],
     }).where(athleteDatabaseModels.athleteSecondary.athleteID == stats['athleteID'])
 
     q.execute()

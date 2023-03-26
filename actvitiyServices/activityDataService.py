@@ -39,7 +39,7 @@ create_consumer = KafkaConsumer('create-activity-via-gpx', bootstrap_servers=['l
 
 def createActivityViaGPX(athleteID, activityID):
     results = gpxparser.parsefile(activityID)
-    activityObjectObj = activityPrimary(athleteID, activityID, results[0], 'Run', results[1], results[2], results[3], results[4], results[5]).get()
+    activityObjectObj = activityPrimary(athleteID, activityID, results[0], 'Run', results[1], results[2], results[3], results[4], results[5].seconds).get()
     print(activityObjectObj)
     #need to write this to the database now
     for key in activityObjectObj.keys():
@@ -52,7 +52,7 @@ def createActivityViaGPX(athleteID, activityID):
         'athleteID': athleteID,
         'activityDistance': results[1],
         'activityElevation': results[2],
-        'activityTime': results[5], #need to convert this into seconds before adding it up
+        'activityTime': results[5].seconds, #need to convert this into seconds before adding it up
     }
     #writing to database - sending it to the athlete-service via kafka
     producer.send('athlete-service', json.dumps(dataObject).encode('utf-8'))
