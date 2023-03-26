@@ -9,6 +9,19 @@ from kafka import KafkaProducer, KafkaConsumer
 
 db = MySQLDatabase('mystravabackend', host='localhost', port=3306, user='root', password='password')
 
+class athleteSecondary(Model):
+    athleteID = TextField() 
+    athleteClubs = TextField()
+    athleteFollowers = TextField()
+    athleteFollowing = TextField()
+    athleteNetDistance = FloatField()
+    athleteNetTime = FloatField()
+    athleteNetElevation = FloatField()
+
+    class Meta:
+        database=db
+        db_table='athleteSecondary'
+
 
 class clubPrimary (Model):
     clubID=TextField()
@@ -49,18 +62,36 @@ We then get get the user's totals from athleteSecondary database and :
         - if yes, increase and resort the top 10
 """
 
-# create a Kafka consumer
+def updateUserClubs(athleteID):
+    athleteSecondaryObjs = athleteSecondary.select().where(athleteSecondary.athleteID == athleteID)
+    athleteNetDistance = 0
+    athleteNetTime = 0
+    athleteNetElevation = 0
+    athleteClubs = ''
+    for each in athleteSecondaryObjs:
+        athleteNetDistance = each.athleteNetDistance
+        athleteNetTime = each.athleteNetTime
+        athleteNetElevation = each.athleteNetElevation
+        athleteClubs = json.loads(each.athleteClubs)
+    
+    #now that we have a list of clubs, we can go through them one by one and one and update it with the user's details
+    for clubID in athleteClubs:
+        print("Club we are updating is: ", clubID)
+        #more logic to come,
+
+
+
 
 if __name__ == '__main__':
+
+    # create a Kafka consumer
     club_consumer = KafkaConsumer('club-service', bootstrap_servers=['localhost:9092'])
 
     while True:
-        print("Club Service Started")
         for message in club_consumer:
-            print("Received in club service:")
+            print("Received in club service")
             athleteID = json.loads(message.value)['athleteID']
-            print(athleteID)
             break
 
         if(athleteID):
-            pass
+            updateUserClubs(athleteID)

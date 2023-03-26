@@ -57,7 +57,9 @@ def createActivityViaGPX(athleteID, activityID):
     #writing to database - sending it to the athlete-service via kafka
     producer.send('athlete-service', json.dumps(dataObject).encode('utf-8'))
     #now we need to call club service
-    producer.send('club-service', json.dumps(dataObject).encode('utf-8'))
+    producer.send('club-service', json.dumps({
+        'athleteID': athleteID
+    }).encode('utf-8'))
     producer.flush()
 
 
@@ -76,11 +78,6 @@ if __name__ == '__main__':
             print("Received 1:")
             print(athleteID, activityID)
             break
-
-        # for message in create_consumer_athleteID:
-        #     uploadedFile = message.value
-        #     print("Received 2:")
-        #     break
 
 
         if(athleteID):
