@@ -36,7 +36,7 @@ create_consumer = KafkaConsumer('create-activity-via-gpx', bootstrap_servers=['l
 
 def createActivityViaGPX(athleteID, activityID):
     results = gpxparser.parsefile(activityID)
-    activityObjectObj = activityPrimary(athleteID, activityID, results[0], 'Run', results[1], results[2], results[3], results[4]).get()
+    activityObjectObj = activityPrimary(athleteID, activityID, results[0], 'Run', results[1], results[2], results[3], results[4], results[5]).get()
     print(activityObjectObj)
     #need to write this to the database now
     for key in activityObjectObj.keys():

@@ -20,6 +20,7 @@ def parsefile(filename):
 
     trackpointLatLong = []
     polylinePoints = []
+    timeObjects = []
 
 
     while(i < len(lines)):
@@ -30,12 +31,8 @@ def parsefile(filename):
             elevation = float(elevation)
             # elevation_values.append(float(elevation))
         if(each.strip()[0:6] == "<time>"):
-            time = each.strip()[6:-12]
-            try:
-                datetime_object = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S')
-            except:
-                datetime_object = datetime.now()
-            time = datetime_object
+            time = each.strip()[6:-7]
+            time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
             # time_values.append(datetime_object)
         if(each.strip()[0:6] == "<trkpt"):
             trkptvals = each.strip().split(" ")
@@ -48,8 +45,8 @@ def parsefile(filename):
             polylinePoints.append([float(latitude),float(longitude)])
             trackpointObject = trackpointValueObject.trackpointValueObject(latitude,longitude,elevation,time)
             trackpointObjects.append(trackpointObject.getObject())
+            timeObjects.append(time)
             elevation = 0
-            time = 0
             latitude = 0
             longitude = 0
         i+=1
@@ -59,6 +56,11 @@ def parsefile(filename):
     net_gain =  elevationObject.netGain()
     biggest_climb = elevationObject.calculateBiggestClimb()
     highest_point = elevationObject.maxElevationReached()
+    start_time = timeObjects[0]
+    end_time = timeObjects[-1]
+    print("Activity Start time: ", start_time)
+    print("Activity End time: ", end_time)
+    print("Activity Elapsed time:", end_time - start_time)
 
     print("Net gain: ", net_gain)
     print("Biggest climb: ", elevationObject.calculateBiggestClimb())
@@ -71,5 +73,5 @@ def parsefile(filename):
     print("Net distance: ", netdistance)
 
     activityPolyline = polyline.encode(polylinePoints)
-    print(activityPolyline)
-    return ['Uploaded File', netdistance*1000, net_gain, 'default time return',activityPolyline]
+    # print(activityPolyline)
+    return ['Uploaded File', netdistance*1000, net_gain,activityPolyline, start_time, end_time - start_time ]
