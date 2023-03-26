@@ -22,37 +22,28 @@ def generateActivityID():
     id = uuid.uuid1()
     return str(id.int)[0:8]
 
-# def queryAllActivities(currentSportType, currentAthleteId, currentActivityType):
-
-#     return dbaccess.readAllAthleteActivities(currentSportType,currentAthleteId, currentActivityType)
-
-#     #commenting the following out and switching to db
-#     with open('./importedData.json') as f:
-#         data = json.load(f)
-#     return data
-
-
-
-
-# @app.route('/getAllActivities')
-# @cross_origin()
-# def getAllActivities():
-#     currentSportType = request.args.get('currentSportType')
-#     currentAthleteId = request.args.get('currentAthleteId')
-#     currentActivityType = request.args.get('currentActivityType')
-#     print(currentSportType)
-#     response = json.dumps(queryAllActivities(currentSportType, currentAthleteId, currentActivityType))
-#     return response
-    
-
 @app.route('/uploadActivityFile', methods=['POST'])
 def upload_file():
+    
+    athleteID = request.args.get('athleteID')
+    #need to check if athleteID is valid or not
+
     activityID = generateActivityID()
     uploadedFile = request.files['gpxfile']
-    uploadedFile.save('./uploadedFiles/' + uploadedFile.filename)
+
+    uploadedFile.save('./uploadedFiles/' + activityID)
 
     #sending it to ADS
-    producer.send('create-activity-via-gpx', value = uploadedFile)
+    producer.send('create-activity-via-gpx-athleteID', json.dumps(
+        {
+            'athleteID':athleteID,
+            'activityID':activityID
+        }
+    ).encode('utf-8'))
+    producer.flush()
+    with open('./uploadedFiles/' + activityID, 'rb') as file:
+        file_data = file.read()
+    producer.send('create-activity-via-gpx', value = file_data)
     producer.flush()
 
     return activityID
