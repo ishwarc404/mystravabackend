@@ -35,18 +35,18 @@ def createAthlete():
     #setting values for the secondary table - not setting part of the primaryObject
     #yeah looks funky but well, just need it to work for now
     athleteObject  = athletePrimaryObject.get()
-    athleteObject['athleteClubs'] = athleteObject['athleteClubs']
-    athleteObject['athleteFollowers'] = athleteObject['athleteFollowers']
-    athleteObject['athleteFollowing'] = athleteObject['athleteFollowing']
-    athleteObject['athleteNetDistance'] = athleteObject['athleteNetDistance']
-    athleteObject['athleteNetTime'] = athleteObject['athleteNetTime']
-    athleteObject['athleteNetElevation'] = athleteObject['athleteNetElevation']
+    athleteObject['athleteClubs']= request.args.get('athleteClubs')
+    athleteObject['athleteFollowers']= request.args.get('athleteFollowers')
+    athleteObject['athleteFollowing']= request.args.get('athleteFollowing')
+    athleteObject['athleteNetDistance']= request.args.get('athleteNetDistance')
+    athleteObject['athleteNetTime']= request.args.get('athleteNetTime')
+    athleteObject['athleteNetElevation']= request.args.get('athleteNetElevation')
 
 
     athleteObject['kafka_type'] = 'create_athlete' #to distinguish from other kafka messages
 
     #writing to database
-    producer.send('athlete-service', json.dumps(athletePrimaryObject.get()).encode('utf-8'))
+    producer.send('athlete-service', json.dumps(athleteObject).encode('utf-8'))
     producer.flush()
 
     return athleteID
