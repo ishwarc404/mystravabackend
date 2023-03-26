@@ -7,52 +7,83 @@ import random
 #database name is: mystravabackend
 import athleteObject
 from kafka import KafkaProducer, KafkaConsumer
-
+import  athleteDatabaseModels
 # create a Kafka consumer
-create_consumer = KafkaConsumer('create-athlete', bootstrap_servers=['localhost:9092'])
+create_consumer = KafkaConsumer('athlete-service', bootstrap_servers=['localhost:9092'])
 # read_consumer = KafkaConsumer('read-athlete', bootstrap_servers=['localhost:9092'])
 
-db = MySQLDatabase('mystravabackend', host='localhost', port=3306, user='root', password='password')
 
-class athletePrimary(Model):
-    athleteID = TextField() 
-    athleteFirstName = TextField()
-    athleteLastName = TextField()
-    athleteImage = TextField()
-    athleteCity = TextField()
-    athleteState = TextField()
-    
-    class Meta:
-        database=db
-        db_table='athletePrimary'
 
 
 def setUpAthletePrimaryTable():
-    db.connect()
-    db.create_tables([athletePrimary])
+    athleteDatabaseModels.db.connect()
+    athleteDatabaseModels.db.create_tables([athleteDatabaseModels.athletePrimary, athleteDatabaseModels.athleteSecondary])
 
 def tearDownAthletePrimaryTable():
-    db.connect()
-    db.drop_tables([athletePrimary])
+    athleteDatabaseModels.db.connect()
+    athleteDatabaseModels.db.drop_tables([athleteDatabaseModels.athletePrimary, athleteDatabaseModels.athleteSecondary])
 
 
 def writeToAthletePrimary(athletePrimaryObject):
-    # read messages from the 'my-topic' topic
-    print(athletePrimaryObject['athleteID'])
-    q = athletePrimary.insert(athleteID=athletePrimaryObject['athleteID'], athleteFirstName=athletePrimaryObject['athleteFirstName'], athleteLastName=athletePrimaryObject['athleteLastName'], athleteImage=athletePrimaryObject['athleteImage'], athleteCity=athletePrimaryObject['athleteCity'], athleteState=athletePrimaryObject['athleteState'])
+    print("Populating Athlete Primary:", athletePrimaryObject['athleteID'])
+    q = athleteDatabaseModels.athletePrimary.insert(athleteID=athletePrimaryObject['athleteID'], athleteFirstName=athletePrimaryObject['athleteFirstName'], athleteLastName=athletePrimaryObject['athleteLastName'], athleteImage=athletePrimaryObject['athleteImage'], athleteCity=athletePrimaryObject['athleteCity'], athleteState=athletePrimaryObject['athleteState'])
+    q.execute()
+
+    athleteSecondaryObject = {
+        'athleteID' : athletePrimaryObject['athleteID'],
+        'athleteClubs' : athletePrimaryObject['athleteClubs'],
+        'athleteFollowers' : athletePrimaryObject['athleteFollowers'],
+        'athleteFollowing' : athletePrimaryObject['athleteFollowing'],
+        'athleteNetDistance' : athletePrimaryObject['athleteNetDistance'],
+        'athleteNetTime' : athletePrimaryObject['athleteNetTime'],
+        'athleteNetElevation' : athletePrimaryObject['athleteNetElevation'],
+    }
+    writeToAthleteSecondary(athleteSecondaryObject)
+
+def writeToAthleteSecondary(athleteSecondaryObject):
+    print("Populating Athlete Secondary:", athleteSecondaryObject['athleteID'])
+    q = athleteDatabaseModels.athleteSecondary.insert(
+        athleteID=athleteSecondaryObject['athleteID'], 
+        athleteClubs = athleteSecondaryObject['athleteClubs'], #this will be an array in string form
+        athleteFollowers = athleteSecondaryObject['athleteFollowers'], #this will be an array in string form
+        athleteFollowing = athleteSecondaryObject['athleteFollowing'], #this will be an array in string form
+        athleteNetDistance = athleteSecondaryObject['athleteNetDistance'],
+        athleteNetTime = athleteSecondaryObject['athleteNetTime'],
+        athleteNetElevation = athleteSecondaryObject['athleteNetElevation'],
+    )
     q.execute()
 
 
-def readFromAthletePrimary(athleteID):
-    rows = athletePrimary.select().where(athletePrimary.athleteID == athleteID)
+
+def updateAthleteSecondaryActivityStat(stats):
+    #we need to find the right athleteID and add the stats to their current stat
+    #we are not doing weekly, just overall since beginning of time
+    
+    q = athleteDatabaseModels.athleteSecondary.update({
+        athleteDatabaseModels.athleteSecondary.athleteNetDistance : int(athleteDatabaseModels.athleteSecondary.athleteNetDistance) + stats['activityDistance'],
+        athleteDatabaseModels.athleteSecondary.athleteNetTime : stats['activityTime'],
+        athleteDatabaseModels.athleteSecondary.athleteNetElevation : int(athleteDatabaseModels.athleteSecondary.athleteNetElevation) + stats['activityElevation'],
+    }).where(athleteDatabaseModels.athleteSecondary.athleteID == stats['athleteID'])
+
+    q.execute()
+    
+    pass
+
+
+def readFromAthleteSecondary(athleteID):
+    rows = athleteDatabaseModels.athletePrimary.select().where(athleteDatabaseModels.athletePrimary.athleteID == athleteID)
     for each in rows:
         retrievedAthletePrimaryObject = athleteObject.athletePrimary(athleteID=each.athleteID, athleteFirstName=each.athleteFirstName, athleteLastName=each.athleteLastName, athleteImage=each.athleteImage, athleteCity=each.athleteCity, athleteState=each.athleteState)
     return retrievedAthletePrimaryObject.get()
 
 #run only once while set-up
 if(__name__ == "__main__"):
+    setUpAthletePrimaryTable()
     while(True):
         # read messages from the 'create-athlete' topic
         for message in create_consumer:
-            athletePrimaryObject = json.loads(message.value)
-            writeToAthletePrimary(athletePrimaryObject)
+            dataObject = json.loads(message.value)
+            if(dataObject['kafka_type'] == 'create_athlete'):
+                writeToAthletePrimary(dataObject)
+            elif (dataObject['kafka_type'] == 'update_athlete_secondary_activity_stat'):
+                updateAthleteSecondaryActivityStat(dataObject)

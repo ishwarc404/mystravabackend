@@ -1,0 +1,5 @@
+python3 actvitiyServices/activityServer.py
+python3 athleteServices/athleteServer.py
+
+python3 athleteServices/athleteDatabaseService.py
+python3 activityServices/activityDataService.py
