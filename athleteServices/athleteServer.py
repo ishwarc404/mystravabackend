@@ -5,7 +5,7 @@ import random
 from flask_cors import CORS,cross_origin
 import uuid
 from athleteObject import athletePrimary
-import athleteDatabaseService
+import athleteDataService
 
 from kafka import KafkaProducer, KafkaConsumer
 
@@ -57,8 +57,18 @@ def retrieveAthlete():
     #this will be blocking, because not using kafka but ok for now
     athleteID = request.args.get('athleteID')
     #reading from database
-    retrievedAthleteData = athleteDatabaseService.readFromAthletePrimary(athleteID)
+    retrievedAthleteData = athleteDataService.readFromAthletePrimary(athleteID)
     return json.dumps(retrievedAthleteData)
+
+
+@app.route('/joinClub', methods=['GET'])
+def joinClub():
+    #this will be blocking, because not using kafka but ok for now
+    athleteID = request.args.get('athleteID')
+    clubID = request.args.get('clubID')
+    #reading from database
+    athleteDataService.joinClub(clubID, athleteID)
+    return clubID
 
 
 if(__name__ == "__main__"):

@@ -70,11 +70,30 @@ def updateAthleteSecondaryActivityStat(stats):
     pass
 
 
-def readFromAthleteSecondary(athleteID):
+def readFromAthletePrimary(athleteID):
     rows = athleteDatabaseModels.athletePrimary.select().where(athleteDatabaseModels.athletePrimary.athleteID == athleteID)
     for each in rows:
         retrievedAthletePrimaryObject = athleteObject.athletePrimary(athleteID=each.athleteID, athleteFirstName=each.athleteFirstName, athleteLastName=each.athleteLastName, athleteImage=each.athleteImage, athleteCity=each.athleteCity, athleteState=each.athleteState)
     return retrievedAthletePrimaryObject.get()
+
+
+def joinClub(clubID,athleteID):
+    rows = athleteDatabaseModels.athleteSecondary.select().where(athleteDatabaseModels.athleteSecondary.athleteID == athleteID)
+    for row in rows:
+        athleteClubs = json.loads(row.athleteClubs)
+        break
+
+        
+    if(clubID not in athleteClubs):
+        athleteClubs.append(int(clubID))
+    
+    #let's put back this new club list into the database
+    q = athleteDatabaseModels.athleteSecondary.update({
+        athleteDatabaseModels.athleteSecondary.athleteClubs : athleteClubs
+    }).where(athleteDatabaseModels.athleteSecondary.athleteID == athleteID)    
+
+    q.execute()
+
 
 #run only once while set-up
 if(__name__ == "__main__"):

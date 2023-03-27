@@ -62,6 +62,11 @@ We then get get the user's totals from athleteSecondary database and :
         - if yes, increase and resort the top 10
 """
 
+def createClub(clubID, clubName, clubOwnerID):
+    q = clubPrimary.insert(clubID=clubID,clubName=clubName, clubOwnerID=clubOwnerID)
+    q.execute()
+
+
 def updateUserClubs(athleteID):
     athleteSecondaryObjs = athleteSecondary.select().where(athleteSecondary.athleteID == athleteID)
     athleteNetDistance = 0
@@ -74,6 +79,7 @@ def updateUserClubs(athleteID):
         athleteNetElevation = each.athleteNetElevation
         athleteClubs = json.loads(each.athleteClubs)
     
+    print(athleteClubs)
     #now that we have a list of clubs, we can go through them one by one and one and update it with the user's details
     for clubID in athleteClubs:
         print("Club we are updating is: ", clubID)
