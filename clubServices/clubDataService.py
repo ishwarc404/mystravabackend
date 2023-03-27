@@ -85,6 +85,91 @@ def checkIfClubExists(clubID):
     #we can use this from the athleteService to check if it exists before the user adds it to their secondary table
     pass
 
+def updateClubAfterAthleteAdded(athleteID, clubID):
+    #this is to get athlete totals - will be used for leaderboard
+    athleteSecondaryObjs = athleteSecondary.select().where(athleteSecondary.athleteID == athleteID)
+    athleteNetDistance = 0
+    athleteNetTime = 0
+    athleteNetElevation = 0
+    athleteClubs = ''
+    for each in athleteSecondaryObjs:
+        athleteNetDistance = each.athleteNetDistance
+        athleteNetTime = each.athleteNetTime
+        athleteNetElevation = each.athleteNetElevation
+    #we also have athlete individuals
+    
+    #now that we have a list of clubs, we can go through them one by one and one and update it with the user's details
+    #here we need to check if those clubIDs are real and if the user is actually a part of those clubs
+    print("Club we are updating is: ", clubID)
+    #more logic to come,
+    #let's update the club totals first
+        
+    print(dataObject)
+    #we add the activity stats to it
+
+    #we even need to update the club leaderboard
+    #let's get the leaderboards first
+    clubDetails = clubSecondary.select().where(clubSecondary.clubID == clubID)
+    #there will be only one row
+    finalLeaderBoards = []
+    for row in clubDetails:
+        currentLeaderboard = json.loads(row.clubLeaderBoard)                        
+        elevationLeaderboard = currentLeaderboard['elevationLeaderboard'] #set of tuple values (athleteID, activityValue)
+        distanceLeaderBoard = currentLeaderboard['distanceLeaderBoard']
+        timeLeaderBoard = currentLeaderboard['timeLeaderBoard']
+        leaderBoards = [elevationLeaderboard, distanceLeaderBoard, timeLeaderBoard]
+        currentAthleteValues = [athleteNetElevation, athleteNetDistance, athleteNetTime]
+
+        for eachLeaderboardIndex in range(0,len(leaderBoards)):
+            if(len(leaderBoards[eachLeaderboardIndex]) != 0):
+                #assuming athlete is already not in the leaderboard
+                athletesInLeaderboard = [i for i, j in leaderBoards[eachLeaderboardIndex]]
+                if(athleteID not in athletesInLeaderboard):
+                    leaderBoards[eachLeaderboardIndex] = sorted(leaderBoards[eachLeaderboardIndex], key=lambda tup: tup[1], reverse=True) #sorting based on 2nd value which is the acvity value
+                    if(currentAthleteValues[eachLeaderboardIndex] > leaderBoards[eachLeaderboardIndex][-1][1]):
+                        leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
+                    else:
+                        if(len(leaderBoards[eachLeaderboardIndex]) < 10):
+                            #if there aren't 10 spots already filled
+                            leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
+                        else:
+                            #if there already are 10 spotsa filled, we do not do anything
+                            pass
+                else:
+                    #if athelete is already part of the leaderboard, we just update his value and sort the list
+                    tupleIndex = [x for x, y in enumerate(leaderBoards[eachLeaderboardIndex]) if y[0] == athleteID][0]
+                    #replacing it with new value
+                    leaderBoards[eachLeaderboardIndex][tupleIndex] = (athleteID, currentAthleteValues[eachLeaderboardIndex])
+                    #sorting the list again
+                    leaderBoards[eachLeaderboardIndex] = sorted(leaderBoards[eachLeaderboardIndex], key=lambda tup: tup[1], reverse=True) #sorting based on 2nd value which is the acvity value
+            
+            else:
+                #if there are no other athlete values
+                leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
+
+            
+            finalLeaderBoards.append(leaderBoards[eachLeaderboardIndex])
+
+    leaderBoardObject = {
+        'elevationLeaderboard': finalLeaderBoards[0],
+        'distanceLeaderBoard': finalLeaderBoards[1],
+        'timeLeaderBoard': finalLeaderBoards[2]
+    }
+    leaderBoardObject = json.dumps(leaderBoardObject)
+
+
+    #finally updating it all
+    q = clubSecondary.update({
+        clubSecondary.clubTotalDistance : clubSecondary.clubTotalDistance + athleteNetDistance,
+        clubSecondary.clubTotalTime : clubSecondary.clubTotalTime + athleteNetTime,
+        clubSecondary.clubTotalElevationGain : clubSecondary.clubTotalElevationGain + athleteNetElevation,
+        clubSecondary.clubLeaderBoard : leaderBoardObject,
+    }).where(clubSecondary.clubID == clubID)
+
+
+
+    q.execute()
+
 def updateUserClubs(dataObject):
     athleteID = dataObject['athleteID']
 
@@ -189,11 +274,11 @@ if __name__ == '__main__':
 
     # RUN THE FOLLOWING ONLY ONCE, OR ELSE REPEATED ROWS!
     # setUpClubTable()
-    createClubPrimary(1,'First Club', '971753') #also creates secondary automatically
-    createClubPrimary(2,'Second Club', '971753')
-    createClubPrimary(3,'Third Club', '971753')
-    createClubPrimary(4,'Fourth Club', '174831')
-    createClubPrimary(5,'Fifth Club', '174831')
+    # createClubPrimary(1,'First Club', '971753') #also creates secondary automatically
+    # createClubPrimary(2,'Second Club', '971753')
+    # createClubPrimary(3,'Third Club', '971753')
+    # createClubPrimary(4,'Fourth Club', '174831')
+    # createClubPrimary(5,'Fifth Club', '174831')
 
     # create a Kafka consumer
     club_consumer = KafkaConsumer('club-service', bootstrap_servers=['localhost:9092'])
@@ -204,5 +289,7 @@ if __name__ == '__main__':
             dataObject = json.loads(message.value)
             break
 
-        if(dataObject):
+        if(dataObject['kafka_type'] == 'club-service-existing-athlete'):
             updateUserClubs(dataObject)
+        elif(dataObject['kafka_type'] == 'club-service-new-athlete'):
+            updateClubAfterAthleteAdded(dataObject['athleteID'], dataObject['clubID'])

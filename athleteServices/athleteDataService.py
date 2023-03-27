@@ -13,6 +13,9 @@ create_consumer = KafkaConsumer('athlete-service', bootstrap_servers=['localhost
 # read_consumer = KafkaConsumer('read-athlete', bootstrap_servers=['localhost:9092'])
 
 
+# create a Kafka producer
+producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
+
 
 
 def setUpAthletePrimaryTable():
@@ -93,6 +96,13 @@ def joinClub(clubID,athleteID):
     }).where(athleteDatabaseModels.athleteSecondary.athleteID == athleteID)    
 
     q.execute()
+    dataObject = {
+        'kafka_type' : 'club-service-new-athlete',
+        'athleteID' : athleteID,
+        'clubID' : clubID
+    }
+    producer.send('club-service', json.dumps(dataObject).encode('utf-8'))
+    producer.flush()
 
 
 #run only once while set-up

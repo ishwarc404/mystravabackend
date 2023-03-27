@@ -61,13 +61,14 @@ def retrieveAthlete():
     return json.dumps(retrievedAthleteData)
 
 
-@app.route('/joinClub', methods=['GET'])
+@app.route('/joinClub', methods=['POST'])
 def joinClub():
     #this will be blocking, because not using kafka but ok for now
     athleteID = request.args.get('athleteID')
     clubID = request.args.get('clubID')
     #reading from database
     athleteDataService.joinClub(clubID, athleteID)
+    #updating club statistics
     return clubID
 
 

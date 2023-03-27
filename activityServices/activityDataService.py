@@ -60,6 +60,7 @@ def createActivityViaGPX(athleteID, activityID):
     #writing to database - sending it to the athlete-service via kafka
     producer.send('athlete-service', json.dumps(dataObject).encode('utf-8'))
     #now we need to call club service
+    dataObject['kafka_type'] = 'club-service-existing-athlete'
     producer.send('club-service', json.dumps(dataObject).encode('utf-8'))
     producer.flush()
 
