@@ -111,48 +111,66 @@ def updateUserClubs(dataObject):
             
         print(dataObject)
         #we add the activity stats to it
-        q = clubSecondary.update({
-            clubSecondary.clubTotalDistance : clubSecondary.clubTotalDistance + dataObject['activityDistance'],
-            clubSecondary.clubTotalTime : clubSecondary.clubTotalTime + dataObject['activityTime'],
-            clubSecondary.clubTotalElevationGain : clubSecondary.clubTotalElevationGain + dataObject['activityElevation'],
-        }).where(clubSecondary.clubID == eachClubID)
 
         #we even need to update the club leaderboard
         #let's get the leaderboards first
         clubDetails = clubSecondary.select().where(clubSecondary.clubID == eachClubID)
         #there will be only one row
+        finalLeaderBoards = []
         for row in clubDetails:
             currentLeaderboard = json.loads(row.clubLeaderBoard)                        
             elevationLeaderboard = currentLeaderboard['elevationLeaderboard'] #set of tuple values (athleteID, activityValue)
             distanceLeaderBoard = currentLeaderboard['distanceLeaderBoard']
             timeLeaderBoard = currentLeaderboard['timeLeaderBoard']
+            leaderBoards = [elevationLeaderboard, distanceLeaderBoard, timeLeaderBoard]
+            currentAthleteValues = [athleteNetElevation, athleteNetDistance, athleteNetTime]
 
-            if(len(elevationLeaderboard) != 0):
-                #assuming athlete is already not in the leaderboard
-                athletesInLeaderboard = [i for i, j in elevationLeaderboard]
-                if(athleteID not in athletesInLeaderboard):
-                    elevationLeaderboard = sorted(elevationLeaderboard, key=lambda tup: tup[1]) #sorting based on 2nd value which is the acvity value
-                    if(athleteNetElevation > elevationLeaderboard[-1][1]):
-                        elevationLeaderboard.append((athleteID, athleteNetElevation))
+            for eachLeaderboardIndex in range(0,len(leaderBoards)):
+                if(len(leaderBoards[eachLeaderboardIndex]) != 0):
+                    #assuming athlete is already not in the leaderboard
+                    athletesInLeaderboard = [i for i, j in leaderBoards[eachLeaderboardIndex]]
+                    if(athleteID not in athletesInLeaderboard):
+                        leaderBoards[eachLeaderboardIndex] = sorted(leaderBoards[eachLeaderboardIndex], key=lambda tup: tup[1], reverse=True) #sorting based on 2nd value which is the acvity value
+                        if(currentAthleteValues[eachLeaderboardIndex] > leaderBoards[eachLeaderboardIndex][-1][1]):
+                            leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
+                        else:
+                            if(len(leaderBoards[eachLeaderboardIndex]) < 10):
+                                #if there aren't 10 spots already filled
+                                leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
+                            else:
+                                #if there already are 10 spotsa filled, we do not do anything
+                                pass
+                    else:
+                        #if athelete is already part of the leaderboard, we just update his value and sort the list
+                        tupleIndex = [x for x, y in enumerate(leaderBoards[eachLeaderboardIndex]) if y[0] == athleteID][0]
+                        #replacing it with new value
+                        leaderBoards[eachLeaderboardIndex][tupleIndex] = (athleteID, currentAthleteValues[eachLeaderboardIndex])
+                        #sorting the list again
+                        leaderBoards[eachLeaderboardIndex] = sorted(leaderBoards[eachLeaderboardIndex], key=lambda tup: tup[1], reverse=True) #sorting based on 2nd value which is the acvity value
+                
                 else:
-                    #if athelete is already part of the leaderboard, we just update his value and sort the list
-                    tupleIndex = [x for x, y in enumerate(elevationLeaderboard) if y[0] == athleteID][0]
-                    #replacing it with new value
-                    elevationLeaderboard[tupleIndex] = (athleteID, athleteNetElevation)
-                    #sorting the list again
-                    elevationLeaderboard = sorted(elevationLeaderboard, key=lambda tup: tup[1]) #sorting based on 2nd value which is the acvity value
-            else:
-                elevationLeaderboard.append(athleteID, athleteNetElevation)
+                    #if there are no other athlete values
+                    leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
 
-            if(len(distanceLeaderBoard) != 0):
-                pass
-            else:
-                pass
-        
-            if(len(timeLeaderBoard) != 0):
-                pass
-            else:
-                pass
+                
+                finalLeaderBoards.append(leaderBoards[eachLeaderboardIndex])
+
+        leaderBoardObject = {
+            'elevationLeaderboard': finalLeaderBoards[0],
+            'distanceLeaderBoard': finalLeaderBoards[1],
+            'timeLeaderBoard': finalLeaderBoards[2]
+        }
+        leaderBoardObject = json.dumps(leaderBoardObject)
+
+
+        #finally updating it all
+        q = clubSecondary.update({
+            clubSecondary.clubTotalDistance : clubSecondary.clubTotalDistance + dataObject['activityDistance'],
+            clubSecondary.clubTotalTime : clubSecondary.clubTotalTime + dataObject['activityTime'],
+            clubSecondary.clubTotalElevationGain : clubSecondary.clubTotalElevationGain + dataObject['activityElevation'],
+            clubSecondary.clubLeaderBoard : leaderBoardObject,
+        }).where(clubSecondary.clubID == eachClubID)
+
 
 
         q.execute()
@@ -171,11 +189,11 @@ if __name__ == '__main__':
 
     # RUN THE FOLLOWING ONLY ONCE, OR ELSE REPEATED ROWS!
     # setUpClubTable()
-    # createClubPrimary(1,'First Club', '971753') #also creates secondary automatically
-    # createClubPrimary(2,'Second Club', '971753')
-    # createClubPrimary(3,'Third Club', '971753')
-    # createClubPrimary(4,'Fourth Club', '174831')
-    # createClubPrimary(5,'Fifth Club', '174831')
+    createClubPrimary(1,'First Club', '971753') #also creates secondary automatically
+    createClubPrimary(2,'Second Club', '971753')
+    createClubPrimary(3,'Third Club', '971753')
+    createClubPrimary(4,'Fourth Club', '174831')
+    createClubPrimary(5,'Fifth Club', '174831')
 
     # create a Kafka consumer
     club_consumer = KafkaConsumer('club-service', bootstrap_servers=['localhost:9092'])
