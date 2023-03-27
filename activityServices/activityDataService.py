@@ -54,12 +54,13 @@ def createActivityViaGPX(athleteID, activityID):
         'activityElevation': results[2],
         'activityTime': results[5].seconds, #need to convert this into seconds before adding it up
     }
+
+    print(dataObject)
+    print("-----")
     #writing to database - sending it to the athlete-service via kafka
     producer.send('athlete-service', json.dumps(dataObject).encode('utf-8'))
     #now we need to call club service
-    producer.send('club-service', json.dumps({
-        'athleteID': athleteID
-    }).encode('utf-8'))
+    producer.send('club-service', json.dumps(dataObject).encode('utf-8'))
     producer.flush()
 
 
