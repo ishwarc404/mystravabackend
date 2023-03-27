@@ -148,7 +148,7 @@ def updateClubAfterAthleteAdded(athleteID, clubID):
                 leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
 
             
-            finalLeaderBoards.append(leaderBoards[eachLeaderboardIndex])
+            finalLeaderBoards.append(sorted(leaderBoards[eachLeaderboardIndex], key=lambda tup: tup[1], reverse=True))
 
     leaderBoardObject = {
         'elevationLeaderboard': finalLeaderBoards[0],
