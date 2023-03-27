@@ -74,7 +74,8 @@ def createClubSecondary(clubID):
     clubTotalTime = 0
     clubTotalElevationGain = 0
     clubTotalAthletes = 0
-    clubLeaderBoard = ''
+    clubLeaderBoard = { 'elevationLeaderboard': [], 'distanceLeaderBoard': [], 'timeLeaderBoard': []} #set of tuple values (athleteID, activityValue) 
+    clubLeaderBoard = json.dumps(clubLeaderBoard)
     q = clubSecondary.insert(clubID=clubID,clubTotalDistance=clubTotalDistance, 
     clubTotalTime=clubTotalTime, clubTotalElevationGain = clubTotalElevationGain,
     clubTotalAthletes = clubTotalAthletes, clubLeaderBoard=clubLeaderBoard)
@@ -107,8 +108,6 @@ def updateUserClubs(dataObject):
         print("Club we are updating is: ", eachClubID)
         #more logic to come,
         #let's update the club totals first
-        #let's get the club details
-        clubRows = clubSecondary.select().where(clubSecondary.clubID == eachClubID)
             
         print(dataObject)
         #we add the activity stats to it
@@ -117,6 +116,44 @@ def updateUserClubs(dataObject):
             clubSecondary.clubTotalTime : clubSecondary.clubTotalTime + dataObject['activityTime'],
             clubSecondary.clubTotalElevationGain : clubSecondary.clubTotalElevationGain + dataObject['activityElevation'],
         }).where(clubSecondary.clubID == eachClubID)
+
+        #we even need to update the club leaderboard
+        #let's get the leaderboards first
+        clubDetails = clubSecondary.select().where(clubSecondary.clubID == eachClubID)
+        #there will be only one row
+        for row in clubDetails:
+            currentLeaderboard = json.loads(row.clubLeaderBoard)                        
+            elevationLeaderboard = currentLeaderboard['elevationLeaderboard'] #set of tuple values (athleteID, activityValue)
+            distanceLeaderBoard = currentLeaderboard['distanceLeaderBoard']
+            timeLeaderBoard = currentLeaderboard['timeLeaderBoard']
+
+            if(len(elevationLeaderboard) != 0):
+                #assuming athlete is already not in the leaderboard
+                athletesInLeaderboard = [i for i, j in elevationLeaderboard]
+                if(athleteID not in athletesInLeaderboard):
+                    elevationLeaderboard = sorted(elevationLeaderboard, key=lambda tup: tup[1]) #sorting based on 2nd value which is the acvity value
+                    if(athleteNetElevation > elevationLeaderboard[-1][1]):
+                        elevationLeaderboard.append((athleteID, athleteNetElevation))
+                else:
+                    #if athelete is already part of the leaderboard, we just update his value and sort the list
+                    tupleIndex = [x for x, y in enumerate(elevationLeaderboard) if y[0] == athleteID][0]
+                    #replacing it with new value
+                    elevationLeaderboard[tupleIndex] = (athleteID, athleteNetElevation)
+                    #sorting the list again
+                    elevationLeaderboard = sorted(elevationLeaderboard, key=lambda tup: tup[1]) #sorting based on 2nd value which is the acvity value
+            else:
+                elevationLeaderboard.append(athleteID, athleteNetElevation)
+
+            if(len(distanceLeaderBoard) != 0):
+                pass
+            else:
+                pass
+        
+            if(len(timeLeaderBoard) != 0):
+                pass
+            else:
+                pass
+
 
         q.execute()
 
