@@ -133,7 +133,8 @@ def updateClubAfterAthleteAdded(athleteID, clubID):
                             #if there aren't 10 spots already filled
                             leaderBoards[eachLeaderboardIndex].append((athleteID, currentAthleteValues[eachLeaderboardIndex]))
                         else:
-                            #if there already are 10 spotsa filled, we do not do anything
+                            #if there already are 10 spots filled, we do not do anything
+                            #ONLY TOP 10 VALUES WILL BE STORED!
                             pass
                 else:
                     #if athelete is already part of the leaderboard, we just update his value and sort the list

@@ -10,4 +10,4 @@
 Other changes if time permits: Scalibility, dockerise it, connect it to my already existing micro frontend, create a load balancer, create an activtity feed service - we already have this code mainly filtering from the other mock strava project..
 
 The following is the design I am implementing. Co-incidently, it is highly inspired from Mike Kasberg's design, on one of the Strava engineering medium blogs.
-![Check Design.jpg](./Design.jpg)
+![Check Design.png](./Design.png)
